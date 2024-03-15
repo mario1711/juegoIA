@@ -13,6 +13,6 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.sprite.get_rect(center=(x, y))
 
     def draw(self, screen):
-        self.rect.x = round(self.rect.x / TILE_SIZE) * TILE_SIZE
-        self.rect.y = round(self.rect.y / TILE_SIZE) * TILE_SIZE
+        self.rect.x = self.rect.x // TILE_SIZE * TILE_SIZE
+        self.rect.y = self.rect.y // TILE_SIZE * TILE_SIZE
         screen.blit(self.sprite, self.rect)
