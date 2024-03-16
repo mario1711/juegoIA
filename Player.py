@@ -1,14 +1,12 @@
 import pygame
 import os
 import heapq
-import math
 
 TILE_SIZE = 64
-MAP_SIZE = 13
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, x, y, screen_width, screen_height, mapa):
+    def __init__(self, x, y, screen_width, screen_height, map):
         super().__init__()
         self.sprite_dir = os.path.join('assets', 'sprites')
         self.sound_dir = os.path.join('assets', 'sounds')
@@ -21,9 +19,9 @@ class Player(pygame.sprite.Sprite):
         self.blood_sound = pygame.mixer.Sound(os.path.join(self.sound_dir, "blood.mp3"))
         self.moving_to_enemy = False
         self.path = []
-        self.mapa = mapa
+        self.map = map
 
-    def astar(self, start, target, obstacles):
+    def astar(self, start, target, obstacles, map):
         open_set = []
         heapq.heappush(open_set, (0, start))
         came_from = {}
@@ -37,63 +35,42 @@ class Player(pygame.sprite.Sprite):
                 while current_node in came_from:
                     path.append(current_node)
                     current_node = came_from[current_node]
-                    print(path)
                 return path[::-1]
 
-            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-                neighbor = (current_node[0] + dx, current_node[1] + dy)
-                if neighbor in obstacles:
-                    continue
-                new_cost = g_score[current_node] + 1  # Assuming uniform cost for simplicity
-                if neighbor not in g_score or new_cost < g_score[neighbor]:
-                    g_score[neighbor] = new_cost
-                    priority = new_cost + self.heuristic(neighbor, target)
-                    heapq.heappush(open_set, (priority, neighbor))
+            for neighbor in self.get_neighbors(current_node, obstacles):
+                # Calcular el costo del movimiento a este vecino
+                neighbor_cost = self.get_tile_cost(neighbor[0], neighbor[1], map)
+                tentative_g_score = g_score[current_node] + neighbor_cost
+
+                if tentative_g_score < g_score.get(neighbor, float('inf')):
                     came_from[neighbor] = current_node
+                    g_score[neighbor] = tentative_g_score
+                    heapq.heappush(open_set, (tentative_g_score + self.heuristic(neighbor, target), neighbor))
 
         return []
 
+    def get_tile_cost(self, x, y, map):
+        return map.get_tile_cost(x, y)
+
     @staticmethod
     def get_neighbors(node, obstacles):
-        neighbors = [(node[0] + dx, node[1] + dy) for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]]
-        valid_neighbors = [neighbor for neighbor in neighbors if neighbor not in obstacles]
-        return valid_neighbors
+        return [(node[0] + dx, node[1] + dy) for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)] if
+                (node[0] + dx, node[1] + dy) not in obstacles]
 
     @staticmethod
     def heuristic(a, b):
-        return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
     def update(self, obstacles, enemies):
+        dx, dy = 0, 0
+
         if self.moving_to_enemy and self.path:
-            # Obtener la posición del siguiente nodo en el camino
-            next_node = self.path[0]
-            next_position = (next_node[0] * TILE_SIZE, next_node[1] * TILE_SIZE)
+            # Mover al jugador cuadro a cuadro
+            next_node = self.path.pop(0)
+            dx = (next_node[0] * TILE_SIZE) - self.rect.x
+            dy = (next_node[1] * TILE_SIZE) - self.rect.y
 
-            # Calcular el desplazamiento necesario para moverse hacia el siguiente nodo
-            dx = next_position[0] - self.rect.x
-            dy = next_position[1] - self.rect.y
-
-            # Normalizar el desplazamiento para mantener una velocidad constante
-            distance = math.sqrt(dx ** 2 + dy ** 2)
-            if distance != 0:
-                dx = dx / distance
-                dy = dy / distance
-
-            # Aplicar el desplazamiento con una velocidad constante
-            speed = 2
-            dx *= speed
-            dy *= speed
-
-            # Mover al jugador
-            self.rect.x += dx
-            self.rect.y += dy
-
-            # Verificar si el jugador ha llegado al nodo objetivo
-            if abs(self.rect.x - next_position[0]) < 1 and abs(self.rect.y - next_position[1]) < 1:
-                # Si ha llegado, eliminar el nodo del camino
-                self.path.pop(0)
-
-        # Si no hay más nodos en el camino, detener el movimiento
+        # Si el jugador llega al enemigo, detener el movimiento
         if not self.path:
             self.moving_to_enemy = False
 
@@ -105,34 +82,35 @@ class Player(pygame.sprite.Sprite):
                 target = (closest_enemy.rect.x // TILE_SIZE, closest_enemy.rect.y // TILE_SIZE)
                 obstacle_positions = {(obstacle.rect.x // TILE_SIZE, obstacle.rect.y // TILE_SIZE) for obstacle in
                                       obstacles}
-                self.path = self.astar(start, target, obstacle_positions)
+                self.path = self.astar(start, target, obstacle_positions, self.map)
                 if self.path:
                     self.moving_to_enemy = True
 
-        # Verificar colisiones con los límites de la pantalla
-        self.rect.clamp_ip(
-            pygame.Rect(TILE_SIZE, TILE_SIZE, self.screen_width - 2 * TILE_SIZE, self.screen_height - 2 * TILE_SIZE))
+        # Calcular la próxima posición del jugador
+        next_rect = self.rect.move(dx, dy)
 
         # Verificar colisiones con los obstáculos
-        for obstacle in obstacles:
-            if self.rect.colliderect(obstacle.rect):
-                # Si hay una colisión, retroceder al último nodo en el camino
-                self.path = []
-                break
+        colliding_obstacle = any(next_rect.colliderect(obstacle.rect) for obstacle in obstacles)
+        if not colliding_obstacle:
+            self.rect = next_rect
 
         # Verificar colisiones con los enemigos
         for enemy in enemies[:]:
-            if self.rect.colliderect(enemy.rect):
+            if next_rect.colliderect(enemy.rect):
                 enemies.remove(enemy)
                 self.score += 1
                 pygame.mixer.Sound.play(self.blood_sound)
                 break
 
+        # Verificar los límites de la pantalla
+        self.rect.clamp_ip(
+            pygame.Rect(TILE_SIZE, TILE_SIZE, self.screen_width - 2 * TILE_SIZE, self.screen_height - 2 * TILE_SIZE))
+
     def find_closest_enemy(self, enemies):
         closest_enemy = None
         closest_distance = float('inf')
         for enemy in enemies:
-            distance = math.sqrt((enemy.rect.x - self.rect.x) ** 2 + (enemy.rect.y - self.rect.y) ** 2)
+            distance = abs(enemy.rect.x - self.rect.x) + abs(enemy.rect.y - self.rect.y)
             if distance < closest_distance:
                 closest_enemy = enemy
                 closest_distance = distance

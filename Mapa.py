@@ -14,7 +14,7 @@ class Mapa(pygame.sprite.Sprite):
             0: pygame.image.load(os.path.join(self.sprite_dir, "border.png")).convert_alpha(),
             1: pygame.image.load(os.path.join(self.sprite_dir, "ground.png")).convert_alpha(),
             2: pygame.image.load(os.path.join(self.sprite_dir, "spawn.png")).convert_alpha(),
-             3: pygame.image.load(os.path.join(self.sprite_dir, "lava.png")).convert_alpha(),
+            3: pygame.image.load(os.path.join(self.sprite_dir, "lava.png")).convert_alpha(),
             4: pygame.image.load(os.path.join(self.sprite_dir, "sand.png")).convert_alpha()
         }
 
@@ -76,12 +76,17 @@ class Mapa(pygame.sprite.Sprite):
                 if tile:
                     screen.blit(tile, (col_index * TILE_SIZE, row_index * TILE_SIZE))
 
-    @property
-    def tile_costs(self):
-        return {
-            0: float('inf'),  # Costo infinito para los bordes
-            1: 1,  # Costo bajo para el suelo
-            2: 1,  # Costo bajo para el punto de inicio
-            3: 10,  # Costo alto para la lava
-            4: 2  # Costo moderado para la arena
-        }
+    def get_tile_cost(self, x, y):
+        pos = self.mapa[x][y]
+        if pos == 0:
+            return float('inf')
+        elif pos == 1:
+            return 1
+        elif pos == 2:
+            return 1
+        elif pos == 3:
+            return 10
+        elif pos == 4:
+            return 2
+        else:
+            return float('inf')
