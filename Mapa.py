@@ -13,8 +13,8 @@ class Map:
             0: pygame.image.load(os.path.join(self.sprite_dir, "border.png")).convert_alpha(),
             1: pygame.image.load(os.path.join(self.sprite_dir, "ground.png")).convert_alpha(),
             2: pygame.image.load(os.path.join(self.sprite_dir, "spawn.png")).convert_alpha(),
-            3: pygame.image.load(os.path.join(self.sprite_dir, "lava.png")).convert_alpha(),
-            4: pygame.image.load(os.path.join(self.sprite_dir, "sand.png")).convert_alpha()
+            3: pygame.image.load(os.path.join(self.sprite_dir, "sand.png")).convert_alpha(),
+
         }
 
         self.tile_mappings = {key: pygame.transform.scale(image, (image.get_width() * 2, image.get_height() * 2))
@@ -35,23 +35,7 @@ class Map:
             [0] * MAP_SIZE
         ]
 
-        self.generate_lava()
         self.generate_sand()
-
-    def generate_lava(self):
-        # Definir un área para el lago de lava
-        lake_size = 4
-        lake_center = (random.randint(lake_size // 2, MAP_SIZE - lake_size // 2 - 1),
-                       random.randint(lake_size // 2, MAP_SIZE - lake_size // 2 - 1))
-
-        # Generar el lago de lava adyacente
-        for y in range(1, MAP_SIZE - 1):
-            for x in range(1, MAP_SIZE - 1):
-                dx = x - lake_center[0]
-                dy = y - lake_center[1]
-                if abs(dx) <= lake_size // 2 and abs(dy) <= lake_size // 2:
-                    if random.random() < 0.5:
-                        self.map[y][x] = 3
 
     def generate_sand(self):
         # Definir un área para el lago de lava
@@ -66,7 +50,7 @@ class Map:
                 dy = y - lake_center[1]
                 if abs(dx) <= lake_size // 2 and abs(dy) <= lake_size // 2:
                     if random.random() < 0.5:
-                        self.map[y][x] = 4
+                        self.map[y][x] = 3
 
     def draw(self, screen):
         for row_index, row in enumerate(self.map):
