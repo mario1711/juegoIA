@@ -1,14 +1,13 @@
-import os
 import pygame
+import os
 import random
 
 TILE_SIZE = 64
 MAP_SIZE = 13
 
 
-class Mapa(pygame.sprite.Sprite):
+class Map:
     def __init__(self):
-        super().__init__()
         self.sprite_dir = os.path.join('assets', 'sprites')
         self.tile_mappings = {
             0: pygame.image.load(os.path.join(self.sprite_dir, "border.png")).convert_alpha(),
@@ -20,8 +19,8 @@ class Mapa(pygame.sprite.Sprite):
 
         self.tile_mappings = {key: pygame.transform.scale(image, (image.get_width() * 2, image.get_height() * 2))
                               for key, image in self.tile_mappings.items()}
-        self.mapa = [
-            [0] * 13,
+        self.map = [
+            [0] * MAP_SIZE,
             [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
             [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
             [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
@@ -33,7 +32,7 @@ class Mapa(pygame.sprite.Sprite):
             [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
             [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
             [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-            [0] * 13
+            [0] * MAP_SIZE
         ]
 
         self.generate_lava()
@@ -52,7 +51,7 @@ class Mapa(pygame.sprite.Sprite):
                 dy = y - lake_center[1]
                 if abs(dx) <= lake_size // 2 and abs(dy) <= lake_size // 2:
                     if random.random() < 0.5:
-                        self.mapa[y][x] = 3
+                        self.map[y][x] = 3
 
     def generate_sand(self):
         # Definir un área para el lago de lava
@@ -67,26 +66,26 @@ class Mapa(pygame.sprite.Sprite):
                 dy = y - lake_center[1]
                 if abs(dx) <= lake_size // 2 and abs(dy) <= lake_size // 2:
                     if random.random() < 0.5:
-                        self.mapa[y][x] = 4
+                        self.map[y][x] = 4
 
     def draw(self, screen):
-        for row_index, row in enumerate(self.mapa):
+        for row_index, row in enumerate(self.map):
             for col_index, tile_type in enumerate(row):
                 tile = self.tile_mappings.get(tile_type)
                 if tile:
                     screen.blit(tile, (col_index * TILE_SIZE, row_index * TILE_SIZE))
 
     def get_tile_cost(self, x, y):
-        pos = self.mapa[x][y]
-        if pos == 0:
+        pos = self.map[x][y]
+        if pos == 0:  # Borde - No transitable
             return float('inf')
-        elif pos == 1:
+        elif pos == 1:  # Tierra - Bajo costo
             return 1
-        elif pos == 2:
+        elif pos == 2:  # Punto de inicio - Bajo costo
             return 1
-        elif pos == 3:
-            return 10
-        elif pos == 4:
-            return 2
-        else:
+        elif pos == 3:  # Lava - Alto costo
+            return 100
+        elif pos == 4:  # Arena - Costo medio
+            return 5
+        else:  # Otros valores - No transitable
             return float('inf')

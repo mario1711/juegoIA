@@ -42,7 +42,7 @@ def main():
     clock = pygame.time.Clock()
     running = True
 
-    mapa = Mapa.Mapa()
+    mapa = Mapa.Map()
     player = Player.Player(416, 416, 832, 832, mapa)
 
     obstacles, enemies = generate_obstacles_and_enemies()
@@ -68,7 +68,6 @@ def main():
 
         pygame.key.set_repeat(1, 250)
 
-        keys = pygame.key.get_pressed()
         player.update(obstacles, enemies)
 
         # Clear the screen
