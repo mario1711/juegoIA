@@ -5,7 +5,7 @@ import random
 TILE_SIZE = 64
 
 # Definir las dos posibles imágenes para los obstáculos
-obstacle_images = ["obstacle.png", "lava.png"]
+obstacle_images = ["obstacle.png"]
 
 
 class Obstacle(pygame.sprite.Sprite):
@@ -13,7 +13,7 @@ class Obstacle(pygame.sprite.Sprite):
         super().__init__()
         self.sprite_dir = os.path.join('assets', 'sprites')
         self.obstacle_tile = pygame.image.load(
-            os.path.join(self.sprite_dir, random.choice(obstacle_images))).convert_alpha()
+            os.path.join(self.sprite_dir, obstacle_images[0])).convert_alpha()
         self.sprite = pygame.transform.scale(self.obstacle_tile,
                                              (self.obstacle_tile.get_width() * 2, self.obstacle_tile.get_height() * 2))
         self.rect = self.sprite.get_rect(center=(x, y))
