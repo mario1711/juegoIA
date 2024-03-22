@@ -1,15 +1,27 @@
+import time
+
 import pygame
 import random
 import Obstacle
 import Player
 import Enemy
 import Mapa
+import Battery
 
 TILE_SIZE = 64
 
 
 def generate_obstacles_and_enemies():
+    potions = [Battery.Battery(128, 128),  # arriba-izquierda
+               Battery.Battery(768, 128),  # arriba-derecha
+               Battery.Battery(448, 448),  # centro
+               Battery.Battery(768, 768),  # abajo-derecha
+               Battery.Battery(128, 768)]  # abajo-izquierda
+
     occupied_positions = set()
+    for p in potions:
+        occupied_positions.add((p.rect.centery // 64, p.rect.centerx // 64))
+
     obstacles = []
     for _ in range(20):
         while True:
@@ -31,7 +43,7 @@ def generate_obstacles_and_enemies():
                     enemies.append(enemy)
                     break
 
-    return obstacles, enemies
+    return obstacles, enemies, potions
 
 
 def main():
@@ -43,9 +55,9 @@ def main():
     running = True
 
     mapa = Mapa.Map()
-    player = Player.Player(416, 416, 832, 832, mapa)
+    player = Player.Player(448, 448, 832, 832, mapa)
 
-    obstacles, enemies = generate_obstacles_and_enemies()
+    obstacles, enemies, potions = generate_obstacles_and_enemies()
 
     all_enemies_destroyed = False
 
@@ -64,11 +76,12 @@ def main():
             text_rect = text_surface.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
             screen.blit(text_surface, text_rect)
             pygame.display.flip()
-            continue
+            time.sleep(5)
+            running = False
 
         pygame.key.set_repeat(1, 250)
 
-        player.update(obstacles, enemies)
+        player.update(obstacles, enemies, potions)
 
         # Clear the screen
         screen.fill((255, 255, 255))
@@ -87,10 +100,19 @@ def main():
         # Draw player
         player.draw(screen)
 
+        for p in potions:
+            p.draw(screen)
+
         # Draw score
         my_font = pygame.font.SysFont('Arial', 30)
         text_surface = my_font.render(f'Puntuacion: {player.get_score()}', False, (255, 255, 255))
         screen.blit(text_surface, (10, 10))
+
+        state = my_font.render(f'State: {player.get_state()}', False, (255, 255, 255))
+        screen.blit(state, (500, 10))
+
+        energy = my_font.render(f'Energy: {player.get_batery()}', False, (255, 255, 255))
+        screen.blit(energy, (10, 792))
 
         pygame.display.flip()
         clock.tick(1)

@@ -40,14 +40,17 @@ class Map:
         self.generate_lava()
 
     def generate_sand(self):
-        # Definir un área para el lago de lava
+        # Definir un área para el lago de arena
         lake_size = 4
         lake_center = (random.randint(lake_size // 2, MAP_SIZE - lake_size // 2 - 1),
                        random.randint(lake_size // 2, MAP_SIZE - lake_size // 2 - 1))
 
-        # Generar el lago de lava adyacente
+        # Generar el lago de arena adyacente
         for y in range(1, MAP_SIZE - 1):
             for x in range(1, MAP_SIZE - 1):
+                # Evita generar arena en el cuadro central
+                if 5 <= x <= 7 and 5 <= y <= 7:
+                    continue
                 dx = x - lake_center[0]
                 dy = y - lake_center[1]
                 if abs(dx) <= lake_size // 2 and abs(dy) <= lake_size // 2:
@@ -63,6 +66,9 @@ class Map:
         # Generar el lago de lava adyacente
         for y in range(1, MAP_SIZE - 1):
             for x in range(1, MAP_SIZE - 1):
+                # Evita generar lava en el cuadro central
+                if 5 <= x <= 7 and 5 <= y <= 7:
+                    continue
                 dx = x - lake_center[0]
                 dy = y - lake_center[1]
                 if abs(dx) <= lake_size // 2 and abs(dy) <= lake_size // 2:
