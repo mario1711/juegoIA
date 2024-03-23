@@ -79,6 +79,16 @@ def main():
             time.sleep(5)
             running = False
 
+        if player.get_batery() <= 0:
+            screen.fill((0, 0, 0))
+            font = pygame.font.SysFont('Arial', 50)
+            text_surface = font.render("Te has quedado sin bateria :(", True, (255, 255, 255))
+            text_rect = text_surface.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+            screen.blit(text_surface, text_rect)
+            pygame.display.flip()
+            time.sleep(5)
+            running = False
+
         pygame.key.set_repeat(1, 250)
 
         player.update(obstacles, enemies, potions)
